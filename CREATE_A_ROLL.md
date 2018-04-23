@@ -26,5 +26,7 @@ Setup CI Services
 
 * Create repo in GitHub
 * Create Travis CI job for new repo
-* `ansible-galaxy setup travis oasis-roles my_role_name [Travis CI API key]`
 * Add GH remote and push code
+* `ansible-galaxy import oasis-roles my_role_name` - adds repo to global Galaxy index
+* `ansible-galaxy setup travis oasis-roles my_role_name [Travis CI API key]` - adds auto-updating Galaxy index
+  when Travis CI jobs are completed
