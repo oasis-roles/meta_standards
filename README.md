@@ -48,8 +48,8 @@ Ansible Best Practices
 ** When a single large role is doing many complicated tasks and cannot easily be broken into multiple roles,
    but the process proceeds in multiple related stages
 * Avoid calling the `package` module iteratively with the `{{ item }}` argument, as this is impressively
-  more slow than calling it with the line `name: "{{ foo_packages | join(',') }}"`. The same can go for
-  many other packages that can be given an entire list of items all at once.
+  more slow than calling it with the line `name: "{{ foo_packages }}"`.  The same can go for many other
+  modules that can be given an entire list of items all at once.
 
 Vars vs Defaults
 ----------------

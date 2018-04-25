@@ -3,8 +3,8 @@ A basic guide for how to create a new role in oasis-roles
 Setup environment
 =================
 
-The following Python tools should be isntalled in either a virtualenv or in your system or elsewise
-should be on your system path
+The following Python tools should be installed in either a virtualenv or in your system or elsewise
+should be on your system path:
 
 * ansible
 * ansible-lint
