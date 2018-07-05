@@ -11,10 +11,10 @@ Create Sceanrio
 
 Configure Scenario Options
 --------------------------
-`vim molecule/my_scenario/molecule.yml` to edit Molecule options
-`vim molecule/my_scenario/converge.yml` to set values for test defaults in the
+`$EDITOR molecule/my_scenario/molecule.yml` to edit Molecule options
+`$EDITOR molecule/my_scenario/converge.yml` to set values for test defaults in the
 run
-`vim molecule/my_scenario/[create|destroy].yml` to update driver options
+`$EDITOR molecule/my_scenario/[create|destroy].yml` to update driver options
 
 Run Whole Scenario
 ------------------
