@@ -19,8 +19,8 @@ Naming Things
 * All defaults and all arguments to a role should have a name that begins with the role name to help
   avoid collision with other names. Avoid names like `packages` in favor of a name like `foo_role_packages`.
 
-Syntax
-======
+YAML Syntax
+===========
 
 * All roles need to, minimally, pass a basic ansible-playbook syntax check run
 * All task arguments should be spelled out in YAML style and not use `key=value` type of arguments
@@ -29,6 +29,12 @@ Syntax
   `---` string at the top of a file) should not be used, and it is not necessary to start every comment
   with a space. Most comments should start with a space, but no space is allowed when a comment is
   documenting an optional variable with its default value.
+** As a result of being able to pass basic YAML lint, avoid the use of `True` and `False` for boolean values
+   in playbooks. These values are sometimes used because they are the words Python uses. However, they are
+   improper YAML and will be treated as either strigns or as booleans but generating a warning depending on
+   the particular YAML implementation.
+** Do not use the Ansible-specific `yes` and `no` as boolean values in YAML as these are completely
+   custom extensions used by Ansible and are not part of the YAML spec.
 * Although it is not expressly forbidden, comments in playbooks should be avoided when possible. The task
   `name` value should be descriptive enough to tell what a task does. Variables should be well commented in
   the `defaults` and `vars` directories and should, therefore, not need explanation in the playbooks
@@ -50,6 +56,33 @@ Ansible Best Practices
 * Avoid calling the `package` module iteratively with the `{{ item }}` argument, as this is impressively
   more slow than calling it with the line `name: "{{ foo_packages }}"`.  The same can go for many other
   modules that can be given an entire list of items all at once.
+* Use meta modules when possible. Instead of using the `upstart` and `systemd` modules, use the `service`
+  module when at all possible. Similarly for package management, use `package` isntead of `yum` or `dnf` or
+  similar. This will allow our playbooks to run on the widest selection of operating systems possible without
+  having to modify any more tasks than is necessary.
+* Avoid excessive use of the `lineinefile` module. Slight miscalculations in how it is used can lead to a loss
+  of idempotence. Additionally, modifying config files with it can become arcane and difficult to read,
+  especially for someone not familiar with the file in question. If the file is not in a form that can be
+  modified with a module (e.g. the `ini` module) then default to using the `template` module. This both makes
+  it easier to see what is being configured and to add additional, more complex options in the future.
+* Avoid the use of `lineinfile` wherever that might be feasible. Try editing files directly using other built
+  in modules (e.g. `ini_file`) or reading and parsing. If you are modifying more than a tiny number of lines
+  or in a manner more than trivially complex, try leveraging the `template` module, instead. This will allow
+  the entire structure of the file to be seen by later users and maintainers.
+* Limit use of the `copy` module to copying remote files and to uploading binary blobs. For all other file
+  pushes, use the `template` module. Even if there is nothing in the file that is being templated at the
+  current moment, having the file handled by the `template` module now makes adding that functionality much
+  simpler than if the file is initially handled by the `copy` and then needs to be moved before it can be
+  edited.
+* When using the `template` module, refrain from appending `.j2` to the file name. This alters the syntax
+  highlighting in most editors and will obscure the benefits of highlighting for the particular file type or
+  filename. Anything under the `templates` directory of a role is assumed to be treated as a Jinja 2 template,
+  so adding the `.j2` extension is redundant information that is not helpful.
+* Keep filenames and templates as close to the name on the destination system as possible. This will help with
+  both editor highlighting as well as identifying source and destination versions of the file at a glance.
+  Avoid duplicating the remote full path in the role directory, however, as that creates unnecessary depth in
+  the file tree for the role. Grouping sets of similar files into a subdirectory of `templates` is allowable,
+  but avoid unnecessary depth to the hierarchy.
 
 Vars vs Defaults
 ----------------
