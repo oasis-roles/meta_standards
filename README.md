@@ -40,6 +40,13 @@ YAML Syntax
   the `defaults` and `vars` directories and should, therefore, not need explanation in the playbooks
   themselves.
 
+Jinja2 Syntax
+=============
+
+* All Jinja2 template points should have a single space separating the template markers from the variable
+  name inside. For instance, always write it as `{{ variable_name_here }}`. The same goes if the value is
+  an expression. `{{ variable_name | default('hiya, doc') }}`
+
 Ansible Best Practices
 ======================
 
