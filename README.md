@@ -29,11 +29,11 @@ YAML Syntax
   `---` string at the top of a file) should not be used, and it is not necessary to start every comment
   with a space. Most comments should start with a space, but no space is allowed when a comment is
   documenting an optional variable with its default value.
-** As a result of being able to pass basic YAML lint, avoid the use of `True` and `False` for boolean values
+  * As a result of being able to pass basic YAML lint, avoid the use of `True` and `False` for boolean values
    in playbooks. These values are sometimes used because they are the words Python uses. However, they are
    improper YAML and will be treated as either strigns or as booleans but generating a warning depending on
    the particular YAML implementation.
-** Do not use the Ansible-specific `yes` and `no` as boolean values in YAML as these are completely
+   * Do not use the Ansible-specific `yes` and `no` as boolean values in YAML as these are completely
    custom extensions used by Ansible and are not part of the YAML spec.
 * Although it is not expressly forbidden, comments in playbooks should be avoided when possible. The task
   `name` value should be descriptive enough to tell what a task does. Variables should be well commented in
@@ -56,9 +56,9 @@ Ansible Best Practices
   reduction of repetition. This is the closest that Ansible comes to callable sub-routines, so use judgment
   about callable routines to know when to similarly include a sub playbook. Some examples of good times
   to do so are
-** When a set of multiple commands share a single `when` conditional
-** When a set of multiple commands are being looped together over a list of items
-** When a single large role is doing many complicated tasks and cannot easily be broken into multiple roles,
+  * When a set of multiple commands share a single `when` conditional
+  * When a set of multiple commands are being looped together over a list of items
+  * When a single large role is doing many complicated tasks and cannot easily be broken into multiple roles,
    but the process proceeds in multiple related stages
 * Avoid calling the `package` module iteratively with the `{{ item }}` argument, as this is impressively
   more slow than calling it with the line `name: "{{ foo_packages }}"`.  The same can go for many other
