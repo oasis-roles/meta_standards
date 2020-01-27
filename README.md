@@ -50,7 +50,10 @@ Jinja2 Syntax
 Ansible Best Practices
 ======================
 
-* Avoid the use of `when: foo_result is changed` whenever possible. Use handlers, and, if necessary, handler
+* All tasks should be idempotent, with notable and rare exceptions such as the
+  [OASIS reboot role](https://github.com/oasis-roles/reboot).
+* Avoid the use of `when: foo_result is changed` whenever possible. Use
+  handlers, and, if necessary, handler
   chains to achieve this same result. Exceptions are permitted but they should be avoided when possible
 * Use the various include/import statements in Ansible when doing so can lead to simplified code and a
   reduction of repetition. This is the closest that Ansible comes to callable sub-routines, so use judgment
