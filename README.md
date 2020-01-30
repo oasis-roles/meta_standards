@@ -14,7 +14,7 @@ Naming Things
 
 * All YAML or Python files, variables, arguments, repositories, and other such names should follow
   standard Python naming conventions of being in snake\_case\_naming\_schemes.
-* Names should be menmonic and descriptive and not strive to shorten more than necessary. Systems
+* Names should be mnemonic and descriptive and not strive to shorten more than necessary. Systems
   support long identifier names, so use them to be descriptive
 * All defaults and all arguments to a role should have a name that begins with the role name to help
   avoid collision with other names. Avoid names like `packages` in favor of a name like `foo_role_packages`.
