@@ -99,8 +99,8 @@ Vars vs Defaults
 * Avoid embedding large lists or "magic values" directly into the playbook. Such static lists should be
   placed into the `vars/main.yml` file and named appropriately
 * Every argument accepted from outside of the role should be given a default value in `defaults/main.yml`.
-  This allows a single place for users to look to see what inputs are expected. Document this file
-  copiously
+  This allows a single place for users to look to see what inputs are expected. Document these varialbes
+  in the role's README.md file copiously
 * Use the `defaults/main.yml` file in order to avoid use of the default Jinja2 filter within a playbook.
   Using the default filter is fine for optional keys on a dictionary, but the variable itself should be
   defined in `defaults/main.yml` so that it can have documentation written about it there and so that all
