@@ -67,7 +67,7 @@ Ansible Best Practices
   more slow than calling it with the line `name: "{{ foo_packages }}"`.  The same can go for many other
   modules that can be given an entire list of items all at once.
 * Use meta modules when possible. Instead of using the `upstart` and `systemd` modules, use the `service`
-  module when at all possible. Similarly for package management, use `package` isntead of `yum` or `dnf` or
+  module when at all possible. Similarly for package management, use `package` instead of `yum` or `dnf` or
   similar. This will allow our playbooks to run on the widest selection of operating systems possible without
   having to modify any more tasks than is necessary.
 * Avoid excessive use of the `lineinefile` module. Slight miscalculations in how it is used can lead to a loss
