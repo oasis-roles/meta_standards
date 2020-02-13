@@ -17,7 +17,7 @@ Naming Things
 * Names should be mnemonic and descriptive and not strive to shorten more than necessary. Systems
   support long identifier names, so use them to be descriptive
 * All defaults and all arguments to a role should have a name that begins with the role name to help
-  avoid collision with other names. Avoid names like `packages` in favor of a name like `foo_role_packages`.
+  avoid collision with other names. Avoid names like `packages` in favor of a name like `foo_packages`.
 
 YAML Syntax
 ===========
@@ -109,5 +109,5 @@ Vars vs Defaults
   are difficult for users and consumers of a role to override.
 * As an example, if a role requires a large number of packages to install, but could also accept a list of
   additional packages, then the required packages should be placed in `vars/main.yml` with a name such as
-  `foo_role_packages`, and the extra packages should be passed in a variable named `foo_role_extra_packages`,
+  `foo_packages`, and the extra packages should be passed in a variable named `foo_extra_packages`,
   which should default to an empty array in `defaults/main.yml` and be documented as such.
