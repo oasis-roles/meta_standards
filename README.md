@@ -8,6 +8,13 @@ Basics
   with the exception of any whose names begin with "meta\_", such as this one.
 * New roles should be initiated in line with the skeleton directory, which has standard boilerplate
   code for a Galaxy-compatible Ansible role and some enforcement around these standards
+* Use [semantic versioning](https://semver.org/) for Git release tags.  Use
+  0.y.z before the role is declared stable (interface-wise).  Although it has
+  not been a problem so far for linux system roles, since they use strict X.Y.Z
+  versioning, you should be aware that there are some
+  [restrictions](https://github.com/ansible/ansible/issues/67512) for Ansible
+  Galaxy and Automation Hub.  The versioning must be in strict X.Y.Z[ab][W]
+  format, where X, Y, and Z are integers.
 
 Naming Things
 =============
@@ -19,9 +26,19 @@ Naming Things
 * All defaults and all arguments to a role should have a name that begins with the role name to help
   avoid collision with other names. Avoid names like `packages` in favor of a name like `foo_packages`.
 
-YAML Syntax
+YAML and Jinja2 Syntax
 ===========
 
+* Indent at two spaces
+* List contents should be indented beyond the list definition
+* It is easy to split long Jinja2 expressions into [multiple
+  lines](https://github.com/linux-system-roles/timesync/pull/47/files).  If the
+  `when:` condition results in a line that is too long, and is an `and`
+  expression, then break it into a list of conditions.  Ansible will `and` them
+  together (see: [[1]](https://github.com/linux-system-roles/timesync/pull/36)
+  [[2]](https://docs.ansible.com/ansible/latest/user_guide/playbooks_conditionals.html#the-when-statement)).
+  Multiple conditions that all need to be true (a logical `and`) can also be
+  specified as a list, but beware of bare variables in `when:`.
 * All roles need to, minimally, pass a basic ansible-playbook syntax check run
 * All task arguments should be spelled out in YAML style and not use `key=value` type of arguments
 * All YAML files need to pass standard yamllint syntax with the modifications listed in tests/yamllint.yml
@@ -39,13 +56,16 @@ YAML Syntax
   `name` value should be descriptive enough to tell what a task does. Variables should be well commented in
   the `defaults` and `vars` directories and should, therefore, not need explanation in the playbooks
   themselves.
-
-Jinja2 Syntax
-=============
-
 * All Jinja2 template points should have a single space separating the template markers from the variable
   name inside. For instance, always write it as `{{ variable_name_here }}`. The same goes if the value is
   an expression. `{{ variable_name | default('hiya, doc') }}`
+* When naming files, use the `.yml` extension and *not* `.yaml`.  `.yml` is what
+  `ansible-galaxy init` does when creating a new role template.
+* Double quotes should be used for YAML strings with the exception of Jinja2
+  strings which will use single quotes.
+* Do not use quotes unless you have to, especially for short strings like
+  `present`, `absent`, etc.  This is how examples in module documentation
+  are typically presented.
 
 Ansible Best Practices
 ======================
