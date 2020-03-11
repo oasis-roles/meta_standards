@@ -53,8 +53,18 @@ Basics
 * New roles should be initiated in line with the skeleton directory, which has standard boilerplate
   code for a Galaxy-compatible Ansible role and some enforcement around these standards
 
-Naming Things
-=============
+Interface design considerations
+===================================
+
+What should a role do and how can a user tell it what to do.
+
+## Basic design
+
+Try to design the interface focused on the functionality, not on the software implementation behind
+it. This will help abstracting differences between different providers (see above), and help the
+user to focus on the functionality, not on technical details.
+
+## Naming things
 
 * All YAML or Python files, variables, arguments, repositories, and other such names should follow
   standard Python naming conventions of being in snake\_case\_naming\_schemes.
@@ -62,6 +72,48 @@ Naming Things
   support long identifier names, so use them to be descriptive
 * All defaults and all arguments to a role should have a name that begins with the role name to help
   avoid collision with other names. Avoid names like `packages` in favor of a name like `foo_packages`.
+  (Rationale: Ansible has no namespaces, doing so reduces the potential for conflicts and makes
+  clear what role a given variable belongs to.)
+* Same argument applies for modules provided in the roles, they also need a `$ROLENAME_` prefix:
+  `foo_module`. While they are usually implementation details and not intended for direct use in
+  playbooks, the unfortunate fact is that importing a role makes them available to the rest of the
+  playbook and therefore creates opportunities for name collisions.
+* Moreover, internal variables (those that are not expected to be set by users) are to be prefixed
+  by two underscores: `__foo_variable`. (Rationale: role variables, registered variables, custom
+  facts are usually intended to be local to the role, but in reality are not local to the role - as
+  such a concept does not exist, and pollute the global namespace. Using the name of the role
+  reduces the potential for name conflicts and using the underscores clearly marks the variables as
+  internals and not part of the common interface. The two underscores convention has prior art in
+  some popular roles like
+  [geerlingguy.ansible-role-apache](https://github.com/geerlingguy/ansible-role-apache/blob/f2b91ac84001db3fd4b43306a8f73f1a54f96f7d/vars/Debian.yml#L8)). This
+  includes variables set by set_fact and register, because they persist in the namespace after the
+  role has finished!
+* Do not use special characters other than underscore in variable names, even if YAML/JSON allow
+  them. (Using such variables in Jinja2 or Python would be then very confusing and probably not
+  functional.)
+  
+## Providers
+
+When there are multiple implementations of the same functionality, we call them “providers”. A role
+supporting multiple providers should have an input variable called `$ROLENAME_provider`. If this
+variable is not defined, the role should detect the currently running provider on the system, and
+respect it. (Rationale: users can be surprised if the role changes the provider if they are running
+one already.) If there is no provider currently running, the role should select one according to the
+OS version. (E.g. on RHEL 7, chrony should be selected as the provider of time synchronization,
+unless there is ntpd already running on the system, or user requests it specifically. Chrony should
+be chosen on RHEL 8 as well, because it is the only provider available.) The role should set a
+variable or custom fact called `$ROLENAME_provider_os_default` to the appropriate default value for
+the given OS version. (Rationale: users may want to set all their managed systems to a consistent
+state, regardless of the provider that has been used previously. Setting `$ROLENAME_provider` would
+achieve it, but is suboptimal, because it requires selecting the appropriate value by the user, and
+if the user has multiple system versions managed by a single playbook, a common value supported by
+all of them may not even exist. Moreover, after a major upgrade of their systems, it may force the
+users to change their playbooks to change their `$ROLENAME_provider` setting, if the previous value
+is not supported anymore. Exporting `$ROLENAME_provider_os_default` allows the users to set
+`$ROLENAME_provider: "{{ $ROLENAME_provider_os_default }}"` (thanks to the lazy variable evaluation
+in Ansible) and thus get a consistent setting for all the systems of the given OS version without
+having to decide what the actual value is - the decision is delegated to the role.)
+
 
 YAML Syntax
 ===========
