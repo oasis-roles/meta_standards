@@ -1,6 +1,50 @@
 This document is intended to be a standards document for the Ansible roles contained in the
 Oasis Roles repositories.
 
+Background
+==========
+
+The goal of the Ansible Metateam project (specifically, the [Linux System Roles
+project](https://github.com/linux-system-roles)) is to provide a stable and consistent user
+interface to multiple operating systems (multiple versions of RHEL in the downstream RHEL System
+Roles package, additionally CentOS, Fedora at least). Stable and consistent means that the same
+Ansible playbook will be usable to manage the equivalent functionality in the supported versions
+without the administrator (the user of the role) being forced to change anything in the playbook
+(the roles should serve as abstractions to shield the administrator from differences). Of course,
+this means that the interface of the roles should be itself stable (i.e. changing only in a backward
+compatible way). This implies a great responsibility in the design of the interface, because the
+interface, unlike the underlying implementation, can not be easily changed. 
+
+The differences in the underlying operating systems that the roles need to compensate for are
+basically of two types:
+* Trivial differences like changed names of packages, services, changed location of configuration
+  files. Roles must deals with those by using internal variables based on the OS defaults. This is
+  fairly simple, but still it brings value to the user, because they then do not have to worry about
+  keeping up with such trivial changes. 
+* Change of the underlying implementation of a given functionality. Quite often, there are multiple
+  packages/components implementing the same functionality. Classic examples are the various MTAs
+  (sendmail, postfix, qmail, exim), FTP daemons, etc. In the context of Linux System Roles, we call
+  them “providers”. The goal of the roles is to abstract even such differences, so that when the OS
+  changes to a different component (provider), the role continues to work. An example is time
+  synchronization, where RHEL used to use the ntpd package, then chrony was introduced and became
+  the default, but both components have been shipped in RHEL 6 and RHEL 7, until finally ntpd was
+  dropped from RHEL 8, leaving only chrony. A role covering time synchronization should therefore
+  support both components with the same interface, and on systems which ship both components, both
+  should be supported. The appropriate supported component should be automatically selected on
+  systems that ship only one of them. This covers several related use cases:
+  * Users that want to manage multiple major releases of the system simultaneously with a single playbook.
+  * Users that want to migrate to a new version of the system without changing their automation (playbook).
+  * Users who want to switch to a different provider in the same version of the OS (like switching
+    from ntpd to chrony to RHEL 7) and keep the same playbook.
+
+Designing the interface in the latter case is difficult because it has to be sufficiently abstract
+to cover different providers. We, for example, do not provide an email role in the Linux System
+Roles project, only a postfix role, because the underlying implementations (sendmail, postfix) were
+deemed to be too divergent. Generally, an abstract interface should be something that should be
+always aimed for though, especially if there are multiple providers in use already, and in
+particular when the default provider is changing or is known to be likely to change in the next
+major releases.
+
 Basics
 ======
 
