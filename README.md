@@ -47,6 +47,15 @@ Jinja2 Syntax
   name inside. For instance, always write it as `{{ variable_name_here }}`. The same goes if the value is
   an expression. `{{ variable_name | default('hiya, doc') }}`
 
+Python Guidelines
+===========
+
+* Review Ansible guidelines for
+[modules](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_best_practices.html)
+and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
+* Use [PEP8](https://pep8.org/).
+* File headers and functions should have comments for their intent.
+
 Ansible Best Practices
 ======================
 
