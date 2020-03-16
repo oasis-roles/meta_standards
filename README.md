@@ -67,6 +67,15 @@ YAML and Jinja2 Syntax
   `present`, `absent`, etc.  This is how examples in module documentation
   are typically presented.
 
+Python Guidelines
+===========
+
+* Review Ansible guidelines for
+[modules](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_best_practices.html)
+and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
+* Use [PEP8](https://pep8.org/).
+* File headers and functions should have comments for their intent.
+
 Ansible Best Practices
 ======================
 
