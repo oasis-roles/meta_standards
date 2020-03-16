@@ -1,6 +1,50 @@
 This document is intended to be a standards document for the Ansible roles contained in the
 Oasis Roles repositories.
 
+Background
+==========
+
+The goal of the Ansible Metateam project (specifically, the [Linux System Roles
+project](https://github.com/linux-system-roles)) is to provide a stable and consistent user
+interface to multiple operating systems (multiple versions of RHEL in the downstream RHEL System
+Roles package, additionally CentOS, Fedora at least). Stable and consistent means that the same
+Ansible playbook will be usable to manage the equivalent functionality in the supported versions
+without the administrator (the user of the role) being forced to change anything in the playbook
+(the roles should serve as abstractions to shield the administrator from differences). Of course,
+this means that the interface of the roles should be itself stable (i.e. changing only in a backward
+compatible way). This implies a great responsibility in the design of the interface, because the
+interface, unlike the underlying implementation, can not be easily changed. 
+
+The differences in the underlying operating systems that the roles need to compensate for are
+basically of two types:
+* Trivial differences like changed names of packages, services, changed location of configuration
+  files. Roles must deals with those by using internal variables based on the OS defaults. This is
+  fairly simple, but still it brings value to the user, because they then do not have to worry about
+  keeping up with such trivial changes. 
+* Change of the underlying implementation of a given functionality. Quite often, there are multiple
+  packages/components implementing the same functionality. Classic examples are the various MTAs
+  (sendmail, postfix, qmail, exim), FTP daemons, etc. In the context of Linux System Roles, we call
+  them “providers”. The goal of the roles is to abstract even such differences, so that when the OS
+  changes to a different component (provider), the role continues to work. An example is time
+  synchronization, where RHEL used to use the ntpd package, then chrony was introduced and became
+  the default, but both components have been shipped in RHEL 6 and RHEL 7, until finally ntpd was
+  dropped from RHEL 8, leaving only chrony. A role covering time synchronization should therefore
+  support both components with the same interface, and on systems which ship both components, both
+  should be supported. The appropriate supported component should be automatically selected on
+  systems that ship only one of them. This covers several related use cases:
+  * Users that want to manage multiple major releases of the system simultaneously with a single playbook.
+  * Users that want to migrate to a new version of the system without changing their automation (playbook).
+  * Users who want to switch to a different provider in the same version of the OS (like switching
+    from ntpd to chrony to RHEL 7) and keep the same playbook.
+
+Designing the interface in the latter case is difficult because it has to be sufficiently abstract
+to cover different providers. We, for example, do not provide an email role in the Linux System
+Roles project, only a postfix role, because the underlying implementations (sendmail, postfix) were
+deemed to be too divergent. Generally, an abstract interface should be something that should be
+always aimed for though, especially if there are multiple providers in use already, and in
+particular when the default provider is changing or is known to be likely to change in the next
+major releases.
+
 Basics
 ======
 
@@ -16,8 +60,18 @@ Basics
   Galaxy and Automation Hub.  The versioning must be in strict X.Y.Z[ab][W]
   format, where X, Y, and Z are integers.
 
-Naming Things
-=============
+Interface design considerations
+===================================
+
+What should a role do and how can a user tell it what to do.
+
+## Basic design
+
+Try to design the interface focused on the functionality, not on the software implementation behind
+it. This will help abstracting differences between different providers (see above), and help the
+user to focus on the functionality, not on technical details.
+
+## Naming things
 
 * All YAML or Python files, variables, arguments, repositories, and other such names should follow
   standard Python naming conventions of being in snake\_case\_naming\_schemes.
@@ -25,6 +79,48 @@ Naming Things
   support long identifier names, so use them to be descriptive
 * All defaults and all arguments to a role should have a name that begins with the role name to help
   avoid collision with other names. Avoid names like `packages` in favor of a name like `foo_packages`.
+  (Rationale: Ansible has no namespaces, doing so reduces the potential for conflicts and makes
+  clear what role a given variable belongs to.)
+* Same argument applies for modules provided in the roles, they also need a `$ROLENAME_` prefix:
+  `foo_module`. While they are usually implementation details and not intended for direct use in
+  playbooks, the unfortunate fact is that importing a role makes them available to the rest of the
+  playbook and therefore creates opportunities for name collisions.
+* Moreover, internal variables (those that are not expected to be set by users) are to be prefixed
+  by two underscores: `__foo_variable`. (Rationale: role variables, registered variables, custom
+  facts are usually intended to be local to the role, but in reality are not local to the role - as
+  such a concept does not exist, and pollute the global namespace. Using the name of the role
+  reduces the potential for name conflicts and using the underscores clearly marks the variables as
+  internals and not part of the common interface. The two underscores convention has prior art in
+  some popular roles like
+  [geerlingguy.ansible-role-apache](https://github.com/geerlingguy/ansible-role-apache/blob/f2b91ac84001db3fd4b43306a8f73f1a54f96f7d/vars/Debian.yml#L8)). This
+  includes variables set by set_fact and register, because they persist in the namespace after the
+  role has finished!
+* Do not use special characters other than underscore in variable names, even if YAML/JSON allow
+  them. (Using such variables in Jinja2 or Python would be then very confusing and probably not
+  functional.)
+  
+## Providers
+
+When there are multiple implementations of the same functionality, we call them “providers”. A role
+supporting multiple providers should have an input variable called `$ROLENAME_provider`. If this
+variable is not defined, the role should detect the currently running provider on the system, and
+respect it. (Rationale: users can be surprised if the role changes the provider if they are running
+one already.) If there is no provider currently running, the role should select one according to the
+OS version. (E.g. on RHEL 7, chrony should be selected as the provider of time synchronization,
+unless there is ntpd already running on the system, or user requests it specifically. Chrony should
+be chosen on RHEL 8 as well, because it is the only provider available.) The role should set a
+variable or custom fact called `$ROLENAME_provider_os_default` to the appropriate default value for
+the given OS version. (Rationale: users may want to set all their managed systems to a consistent
+state, regardless of the provider that has been used previously. Setting `$ROLENAME_provider` would
+achieve it, but is suboptimal, because it requires selecting the appropriate value by the user, and
+if the user has multiple system versions managed by a single playbook, a common value supported by
+all of them may not even exist. Moreover, after a major upgrade of their systems, it may force the
+users to change their playbooks to change their `$ROLENAME_provider` setting, if the previous value
+is not supported anymore. Exporting `$ROLENAME_provider_os_default` allows the users to set
+`$ROLENAME_provider: "{{ $ROLENAME_provider_os_default }}"` (thanks to the lazy variable evaluation
+in Ansible) and thus get a consistent setting for all the systems of the given OS version without
+having to decide what the actual value is - the decision is delegated to the role.)
+
 
 YAML and Jinja2 Syntax
 ===========
