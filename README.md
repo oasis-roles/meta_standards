@@ -122,8 +122,10 @@ in Ansible) and thus get a consistent setting for all the systems of the given O
 having to decide what the actual value is - the decision is delegated to the role.)
 
 
-YAML and Jinja2 Syntax
+Implementation considerations
 ===========
+
+## YAML and Jinja2 Syntax
 
 * Indent at two spaces
 * List contents should be indented beyond the list definition
@@ -163,8 +165,7 @@ YAML and Jinja2 Syntax
   `present`, `absent`, etc.  This is how examples in module documentation
   are typically presented.
 
-Python Guidelines
-===========
+## Python Guidelines
 
 * Review Ansible guidelines for
 [modules](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_best_practices.html)
@@ -172,8 +173,7 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
 * Use [PEP8](https://pep8.org/).
 * File headers and functions should have comments for their intent.
 
-Ansible Best Practices
-======================
+## Ansible Best Practices
 
 * All tasks should be idempotent, with notable and rare exceptions such as the
   [OASIS reboot role](https://github.com/oasis-roles/reboot).
@@ -219,8 +219,8 @@ Ansible Best Practices
   the file tree for the role. Grouping sets of similar files into a subdirectory of `templates` is allowable,
   but avoid unnecessary depth to the hierarchy.
 
-Vars vs Defaults
-----------------
+### Vars vs Defaults
+
 * Avoid embedding large lists or "magic values" directly into the playbook. Such static lists should be
   placed into the `vars/main.yml` file and named appropriately
 * Every argument accepted from outside of the role should be given a default value in `defaults/main.yml`.
