@@ -4,7 +4,13 @@ Oasis Roles repositories.
 Meta Best Practices
 ===================
 
-A rationale should be included for best practices, with a reference if applicable. It is really helpful to know not only how to do certain things, but why to do them in this way. It will also help with further revisions of the standards as some items may become obsolete or no longer applicable.  If the reason is not included, there is a risk of keeping items that are no longer applicable, or alternatively blindly removing items that should be kept. It also has great educational value for understanding how things actually work (or how they don’t).
+A rationale should be included for best practices, with a reference if applicable. It is
+really helpful to know not only how to do certain things, but why to do them in this
+way. It will also help with further revisions of the standards as some items may become
+obsolete or no longer applicable.  If the reason is not included, there is a risk of
+keeping items that are no longer applicable, or alternatively blindly removing items that
+should be kept. It also has great educational value for understanding how things actually
+work (or how they don’t).
 
 Background
 ==========
@@ -245,10 +251,13 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
 References
 ==========
 
-Links that contain additional standardization information that provide context, inspiration or contrast to the standards described above.
+Links that contain additional standardization information that provide context,
+inspiration or contrast to the standards described above.
 
 * << Placeholder for RH internal links >>
-* https://github.com/debops/debops/blob/v0.7.2/docs/debops-policy/code-standards-policy.rst). For inspiration, as the DebOps project has some specific guidance that we do not necessarily want to follow.
+* https://github.com/debops/debops/blob/v0.7.2/docs/debops-policy/code-standards-policy.rst). For
+  inspiration, as the DebOps project has some specific guidance that we do not necessarily
+  want to follow.
 * https://github.com/oasis-roles/meta_standards 
 * https://docs.adfinis-sygroup.ch/public/ansible-guide/overview.html 
 * https://docs.openstack.org/openstack-ansible/latest/contributor/code-rules.html 
