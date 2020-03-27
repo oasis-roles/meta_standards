@@ -254,10 +254,8 @@ References
 Links that contain additional standardization information that provide context,
 inspiration or contrast to the standards described above.
 
-* << Placeholder for RH internal links >>
 * https://github.com/debops/debops/blob/v0.7.2/docs/debops-policy/code-standards-policy.rst). For
   inspiration, as the DebOps project has some specific guidance that we do not necessarily
   want to follow.
-* https://github.com/oasis-roles/meta_standards 
 * https://docs.adfinis-sygroup.ch/public/ansible-guide/overview.html 
 * https://docs.openstack.org/openstack-ansible/latest/contributor/code-rules.html 
