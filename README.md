@@ -248,6 +248,21 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   `foo_packages`, and the extra packages should be passed in a variable named `foo_extra_packages`,
   which should default to an empty array in `defaults/main.yml` and be documented as such.
   
+## Documentation conventions
+
+* Example playbooks are to live in the root directory, not in a separate subdirectory, and
+  prefixed with `example-` . Rationale: Ansible depends on particular structure, where
+  directory names have special meanings. If one introduces a new directory, anybody else
+  who looks at the code wonders whether it also has some special meaning.
+* Use fully qualified role names in examples, like: `linux-system-roles.$ROLENAME` (with
+  the Galaxy prefix).
+* Use RFC [5737](https://tools.ietf.org/html/rfc5737),
+  [7042](https://tools.ietf.org/html/rfc7042#section-2.1.1) and
+  [3849](https://tools.ietf.org/html/rfc3849) addresses in examples.
+* Modules should have complete metadata, documentation, example and return blocks as
+  described in the 
+  [Ansible docs](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html).
+
 References
 ==========
 
