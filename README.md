@@ -84,8 +84,15 @@ user to focus on the functionality, not on technical details.
 
 ## Naming things
 
-* All YAML or Python files, variables, arguments, repositories, and other such names should follow
-  standard Python naming conventions of being in snake\_case\_naming\_schemes.
+* All YAML or Python files, variables, arguments, repositories, and other such names (like
+  dictionary keys) should be valid Python identifiers following standard naming conventions of being
+  in snake\_case\_naming\_schemes. In particular, do not use special characters other than
+  underscore in variable names, even if YAML/JSON allow them. (Using such variables in Jinja2 or
+  Python would be then very confusing and probably not functional.) Rationale: even when Ansible
+  currently allows names that are not valid identifier, it may stop allowing them in the future, as
+  it happened in the past already. Making all names valid identifiers will avoid encountering
+  problems in the future. Dictionary keys that are not valid identifier are also less intuitive to
+  use in Jinja2 (a dot in a dictionary key would be particularly confusing).
 * Names should be mnemonic and descriptive and not strive to shorten more than necessary. Systems
   support long identifier names, so use them to be descriptive
 * All defaults and all arguments to a role should have a name that begins with the role name to help
@@ -106,9 +113,6 @@ user to focus on the functionality, not on technical details.
   [geerlingguy.ansible-role-apache](https://github.com/geerlingguy/ansible-role-apache/blob/f2b91ac84001db3fd4b43306a8f73f1a54f96f7d/vars/Debian.yml#L8)). This
   includes variables set by set_fact and register, because they persist in the namespace after the
   role has finished!
-* Do not use special characters other than underscore in variable names, even if YAML/JSON allow
-  them. (Using such variables in Jinja2 or Python would be then very confusing and probably not
-  functional.)
   
 ## Providers
 
