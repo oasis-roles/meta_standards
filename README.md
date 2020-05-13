@@ -145,7 +145,7 @@ for each supported distribution and version with the variables that need to chan
 to the distribution and version. This way it is easy to add support to a new distribution by
 simply dropping a new file in to "vars/", see below
 [Supporting multiple distributions and versions](#supporting-multiple-distributions-and-versions). See also
-[Vars vs Defaults](#vars-vs-defaults) which mandates "Avoid embedding large lists or "magic values" directly
+[Vars vs Defaults](#vars-vs-defaults) which mandates "Avoid embedding large lists or 'magic values' directly
 into the playbook." Since distribution-specific values are kind of "magic values", it applies to them. The
 same logic applies for providers: a role can load a provider-specific variable file, include a
 provider-specific task file, or both, as needed. Consider making paths to templates internal variables if you
@@ -295,8 +295,9 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   make sure that you support them properly (your task will likely need options such as `changed_when:`
   and maybe `check_mode:` ). Anytime `command` or `shell` modules are used, a comment in the code with
   justificiation would help with future maintenance.
-* Beware of bare variables in `when`. Use '`| bool`' if the variable is supposed to hold a boolean
-  value. [more_info](https://github.com/ansible/ansible/issues/39414).
+* Beware of bare variables (expressions consisting of just one variable reference without any
+  operator) in `when`, their behavior is unexpected
+  [more_info](https://github.com/ansible/ansible/issues/39414).
 * Do not use `meta: end_play`. It aborts the whole play instead of a given host (with multiple
   hosts in the inventory) [more_info](https://github.com/ansible/ansible/issues/27973) - We may
   consider using `meta: end_host` but this was recently introduced in Ansible 2.8
