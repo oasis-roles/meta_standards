@@ -206,15 +206,12 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   module when at all possible. Similarly for package management, use `package` instead of `yum` or `dnf` or
   similar. This will allow our playbooks to run on the widest selection of operating systems possible without
   having to modify any more tasks than is necessary.
-* Avoid excessive use of the `lineinefile` module. Slight miscalculations in how it is used can lead to a loss
-  of idempotence. Additionally, modifying config files with it can become arcane and difficult to read,
-  especially for someone not familiar with the file in question. If the file is not in a form that can be
-  modified with a module (e.g. the `ini` module) then default to using the `template` module. This both makes
-  it easier to see what is being configured and to add additional, more complex options in the future.
-* Avoid the use of `lineinfile` wherever that might be feasible. Try editing files directly using other built
-  in modules (e.g. `ini_file`) or reading and parsing. If you are modifying more than a tiny number of lines
-  or in a manner more than trivially complex, try leveraging the `template` module, instead. This will allow
-  the entire structure of the file to be seen by later users and maintainers.
+* Avoid the use of `lineinfile` wherever that might be feasible.  Slight miscalculations in how it is used can
+  lead to a loss of idempotence.  Modifying config files with it can cause the Ansible code to become arcane
+  and difficult to read, especially for someone not familiar with the file in question.  Try editing files
+  directly using other built-in modules (e.g. `ini_file`), or reading and parsing. If you are modifying more
+  than a tiny number of lines or in a manner more than trivially complex, try leveraging the `template` module,
+  instead. This will allow the entire structure of the file to be seen by later users and maintainers.
 * Limit use of the `copy` module to copying remote files and to uploading binary blobs. For all other file
   pushes, use the `template` module. Even if there is nothing in the file that is being templated at the
   current moment, having the file handled by the `template` module now makes adding that functionality much
