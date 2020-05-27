@@ -245,6 +245,17 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   `foo_packages`, and the extra packages should be passed in a variable named `foo_extra_packages`,
   which should default to an empty array in `defaults/main.yml` and be documented as such.
   
+## Documentation conventions
+
+* Use fully qualified role names in examples, like: `linux-system-roles.$ROLENAME` (with
+  the Galaxy prefix).
+* Use RFC [5737](https://tools.ietf.org/html/rfc5737),
+  [7042](https://tools.ietf.org/html/rfc7042#section-2.1.1) and
+  [3849](https://tools.ietf.org/html/rfc3849) addresses in examples.
+* Modules should have complete metadata, documentation, example and return blocks as
+  described in the 
+  [Ansible docs](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html).
+
 References
 ==========
 
