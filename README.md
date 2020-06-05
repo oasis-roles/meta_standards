@@ -136,9 +136,108 @@ is not supported anymore. Exporting `$ROLENAME_provider_os_default` allows the u
 in Ansible) and thus get a consistent setting for all the systems of the given OS version without
 having to decide what the actual value is - the decision is delegated to the role.)
 
-
 Implementation considerations
 ===========
+
+## Role Structure
+Avoid testing for distribution and version in tasks. Rather add a variable file to "vars/"
+for each supported distribution and version with the variables that need to change according
+to the distribution and version. This way it is easy to add support to a new distribution by
+simply dropping a new file in to "vars/", see below
+[Supporting multiple distributions and versions](#supporting-multiple-distributions-and-versions). See also
+[Vars vs Defaults](#vars-vs-defaults) which mandates "Avoid embedding large lists or 'magic values' directly
+into the playbook." Since distribution-specific values are kind of "magic values", it applies to them. The
+same logic applies for providers: a role can load a provider-specific variable file, include a
+provider-specific task file, or both, as needed. Consider making paths to templates internal variables if you
+need different templates for different distributions.
+
+## Check Mode and Idempotency Issues
+
+* The role should work in check mode, meaning that first of all, they should not fail check mode, and
+  they should also not report changes when there are no changes to be done. If it is not possible
+  to support it, please state the fact and provide justification in the documentation.
+  This applies to the first run of the role.
+
+* Reporting changes properly is related to the other requirement: **idempotency**. Roles
+  should not perform changes when applied a second time to the same system with the same parameters,
+  and it should not report that changes have been done if they have not been done. Due to this,
+  using `command:` is problematic, as it always reports changes. Therefore, override the result by
+  using `changed_when:`
+
+* Concerning check mode, one usual obstacle to supporting it are registered variables. If there
+  is a task which registers a variable and this task does not get executed (e.g. because it is a
+  `command:` or another task which is not properly idempotent), the variable will not get registered
+  and further accesses to it will fail (or worse, use the previous value, if the role has been
+  applied before in the play, because variables are global and there is no way to unregister them).
+  To fix, either use a properly idempotent module to obtain the information (e.g. instead of
+  using `command: cat` to read file into a registered variable, use `slurp` and apply `.content|b64decode`
+  to the result like
+  [here](https://github.com/linux-system-roles/kdump/pull/23/files#diff-d2414d4ec8ba189e1a244b0afc9aa81eL8)),
+  or apply proper `check_mode:` and `changed_when:` attributes to the task.
+  [more_info](https://github.com/ansible/molecule/issues/128#issue-135906202).
+
+* Another problem are commands that you need to execute to make changes. In check mode, you
+  need to test for changes without actually applying them. If the command has some kind of "--dry-run"
+  flag to enable executing without making actual changes, use it in check_mode (use the variable
+  `ansible_check_mode` to determine whether we are in check mode). But you then need to set `changed_when:`
+  according to the command status or output to indicate changes. See
+  (https://github.com/linux-system-roles/selinux/pull/38/files#diff-2444ad0870f91f17ca6c2a5e96b26823L101) for
+  an example.
+
+* Another problem is using commands that get installed during the install phase, which is
+  skipped in check mode. This will make check mode fail if the role has not been executed
+  before (and the packages are not there), but does the right thing if check mode is executed after
+  normal mode.
+
+* To view reasoning for supporting why check mode in first execution may not be worthwhile: see
+  [here](https://github.com/ansible/molecule/issues/128#issuecomment-245009843). If this is to be supported,
+  see hhaniel's proposal
+  [here](https://github.com/linux-system-roles/timesync/issues/27#issuecomment-472466223), which seems to
+  properly guard even against such cases.
+
+## Supporting multiple distributions and versions
+
+If some tasks need to be parameterized according to distribution and version (name of packages,
+configuration file paths, names of services), use this in the beginning of your `tasks/main.yml`:
+```yaml
+- name: Set version specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
+    - "{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+```
+
+You can add `- default.yml` at the end to set the variables for unrecognized distributions from a common
+`default.yml` file (not to be confused with defaults for user-settable parameters, which go into
+`defaults/main.yml`). If this is not done, the role will fail for unrecognized distribution (this may or may
+not be intended). Put the distribution-specific variables into appropriate files under "vars/". Unfortunately,
+this would lead to duplicate vars files for similiar distibutions (e.g. CentOS 7 and RHEL 7). In cases such as
+these, use symlinks to avoid the duplication.
+
+
+## Supporting multiple providers
+
+Use a task file per provider and include it from the main task file, like this example from `storage:`
+```yaml
+- name: include the appropriate provider tasks
+  include_tasks: "main_{{ storage_provider }}.yml"
+```
+The same process should be used for variables (not defaults, as defaults can not be loaded
+according to a variable).
+
+
+## Generating files from templates
+* Comment with `{{ ansible_managed }}`at the top of the file.
+  [more_info](https://docs.ansible.com/ansible/latest/modules/template_module.html#template-module)
+* When commenting, don't include anything like "Last modified: {{ date }}". This would change the file at
+  every application of the role, even if it doesn't need to be changed for other reasons, and thus break
+  proper change reporting.
+* Use standard module parameters for backups, keep it on unconditionally (`backup: true`). (Until there is a
+  user request to have it configurable.)
+* Make prominently clear in the HOWTO (at the top) what settings/configuration files are replaced by the role
+  instead of just modified.
 
 ## YAML and Jinja2 Syntax
 
@@ -189,7 +288,40 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
 * File headers and functions should have comments for their intent.
 
 ## Ansible Best Practices
-
+* Ansible variables use lazy evaluation. [more_info](https://github.com/ansible/ansible/issues/10374)
+* All tags should be namespaced/prefixed with the role name.
+* Use preferably the command module instead of the shell module. Even better, use a dedicated module, if it
+  exists. If not, see the [section](#check-mode-and-idempotency-issues) about idempotency and check mode and
+  make sure that you support them properly (your task will likely need options such as `changed_when:`
+  and maybe `check_mode:` ). Anytime `command` or `shell` modules are used, a comment in the code with
+  justificiation would help with future maintenance.
+* Beware of bare variables (expressions consisting of just one variable reference without any
+  operator) in `when`, their behavior is unexpected
+  [more_info](https://github.com/ansible/ansible/issues/39414).
+* Do not use `meta: end_play`. It aborts the whole play instead of a given host (with multiple
+  hosts in the inventory) [more_info](https://github.com/ansible/ansible/issues/27973) - We may
+  consider using `meta: end_host` but this was recently introduced in Ansible 2.8
+  [more_info](https://github.com/ansible/ansible/pull/47194)
+* If reasonable, task names can be made dynamic by using variables (wrapped in Jinja2 templates), this helps
+  with reading the logs. On the other hand, don't do this for play names, variables don't get expanded
+  properly there.
+* Do not override role defaults or vars or input parameters using `set_fact`. Use a different
+  name instead. (Rationale: a fact set using `set_fact` can not be unset and it will override
+  the role default or role variable in all subsequent invocations of the role in the same
+  playbook. A fact has a different priority than other variables and not the highest, so in
+  some cases overriding a given parameter will not work because the parameter has a higher priority)
+  [more_info](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable)
+* Use the smallest scope for variables. Facts are global for playbook run, so it is preferable
+  to use other types of variables. Therefore limit (preferably avoid) the use of `set_fact`.
+  Role variables are exposed to the whole play when the role is applied using `roles:` or
+  `import_role:`. A more restricted scope such as task or block variables is preferred.
+* Beware of `ignore_errors: yes`! Especially in tests. If you set on a block, it will ignore
+  all the asserts in the block ultimately making them pointless. A comment in the code with
+  justification is required to use this statement.
+* Do not use the `eq` (introduced in Jinja 2.10) or `equalto` (introduced in Jinja 2.8) Jinja
+  Operators - or any other post-2.7 Jinja2 features. (RHEL 7 has Jinja 2.7.2)
+  * https://github.com/linux-system-roles/storage/pull/26
+  * https://github.com/linux-system-roles/storage/issues/49
 * All tasks should be idempotent, with notable and rare exceptions such as the
   [OASIS reboot role](https://github.com/oasis-roles/reboot).
 * Avoid the use of `when: foo_result is changed` whenever possible. Use
@@ -213,9 +345,10 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
 * Avoid the use of `lineinfile` wherever that might be feasible.  Slight miscalculations in how it is used can
   lead to a loss of idempotence.  Modifying config files with it can cause the Ansible code to become arcane
   and difficult to read, especially for someone not familiar with the file in question.  Try editing files
-  directly using other built-in modules (e.g. `ini_file`), or reading and parsing. If you are modifying more
-  than a tiny number of lines or in a manner more than trivially complex, try leveraging the `template` module,
-  instead. This will allow the entire structure of the file to be seen by later users and maintainers.
+  directly using other built-in modules (e.g. `ini_file`, `blockinfile`, `xml`), or reading and parsing. If
+  you are modifying more than a tiny number of lines or in a manner more than trivially complex, try
+  leveraging the `template` module, instead. This will allow the entire structure of the file to be seen by
+  later users and maintainers. The use of `lineinfile` should include a comment with justification.
 * Limit use of the `copy` module to copying remote files and to uploading binary blobs. For all other file
   pushes, use the `template` module. Even if there is nothing in the file that is being templated at the
   current moment, having the file handled by the `template` module now makes adding that functionality much
