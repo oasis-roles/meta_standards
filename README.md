@@ -197,25 +197,70 @@ need different templates for different distributions.
 
 ## Supporting multiple distributions and versions
 
-If some tasks need to be parameterized according to distribution and version (name of packages,
-configuration file paths, names of services), use this in the beginning of your `tasks/main.yml`:
+You normally use `vars/main.yml` (automatically included) to set variables
+used by your role.  If some variables need to be parameterized according to
+distribution and version (name of packages, configuration file paths, names of
+services), use this in the beginning of your `tasks/main.yml`:
 ```yaml
-- name: Set version specific variables
+- name: Set platform/version specific variables
   include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
-    - "{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
-    - "{{ ansible_distribution }}.yml"
-    - "{{ ansible_os_family }}.yml"
+  loop:
+    - "{{ role_path }}/vars/{{ ansible_os_family }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_distribution }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
+  when: item is file
 ```
+Use `vars/main.yml` for default values for all platforms.  The files in the
+`loop` are in order from least specific to most specific.  Each file in the
+`loop` list will allow you to add or override additional variables to
+specialize the values for platform and/or version.  Using the `when: item is
+file` test means that you do not have to provide all of the `vars/` files,
+only the ones you need.  For example, if every platform except Fedora uses
+`srv_name` for the service name, you can define `myrole_service: srv_name` in
+`vars/main.yml` then define `myrole_service: srv2_name` in `vars/Fedora.yml`.
+In cases where this would lead to duplicate vars files for similiar
+distibutions (e.g. CentOS 7 and RHEL 7), use symlinks to avoid the
+duplication.
 
-You can add `- default.yml` at the end to set the variables for unrecognized distributions from a common
-`default.yml` file (not to be confused with defaults for user-settable parameters, which go into
-`defaults/main.yml`). If this is not done, the role will fail for unrecognized distribution (this may or may
-not be intended). Put the distribution-specific variables into appropriate files under "vars/". Unfortunately,
-this would lead to duplicate vars files for similiar distibutions (e.g. CentOS 7 and RHEL 7). In cases such as
-these, use symlinks to avoid the duplication.
+Platform specific tasks, however, are different.  You probably want to perform
+platform specific tasks once, for the most specific match.  In that case, use
+`with_first_found` with the file list in order of most specific to least
+specific, including a "default":
+```yaml
+- name: Perform platform/version specific tasks
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "setup_{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
+        - "setup_{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
+        - "setup_{{ ansible_distribution }}.yml"
+        - "setup_{{ ansible_os_family }}.yml"
+        - "setup_default.yml"
+      paths:
+        - "{{ role_path }}/tasks"
+```
+Then you would provide `tasks/setup_default.yml` to do the generic setup, and e.g. `tasks/setup_Fedora.yml` to do the Fedora specific setup.  The "setup_default.yml" is required in order to use `with_first_found`, which will give an error if no file is found.
 
+If you want to have the "use first file found" semantics, but do not want to have to provide a default file, add `skip: true`:
+```yaml
+- name: Perform platform/version specific tasks
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "setup_{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
+        - "setup_{{ ansible_distribution }}.yml"
+        - "setup_{{ ansible_os_family }}.yml"
+      paths:
+        - "{{ role_path }}/tasks"
+      skip: true
+```
+The advantage of this is that you do not have to provide a
+`setup-default.yml`.  The disadvantage is that if you misspell a filename e.g.
+`setup-Feodra.yml` you will not get an error.  **NOTE**: Always specify the
+explicit path to the files to be included when using these idioms.  Otherwise,
+you rely on the default behavior which uses `ansible_search_path` and can lead
+to [unexpected results](https://github.com/richm/richm.github.io/blob/master/how-to-include-vars-and-tasks-in-ansible.md).
 
 ## Supporting multiple providers
 
