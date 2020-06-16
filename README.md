@@ -232,35 +232,40 @@ specific, including a "default":
   include_tasks: "{{ item }}"
   with_first_found:
     - files:
-        - "setup_{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
-        - "setup_{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
-        - "setup_{{ ansible_distribution }}.yml"
-        - "setup_{{ ansible_os_family }}.yml"
-        - "setup_default.yml"
+        - "setup/{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
+        - "setup/{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
+        - "setup/{{ ansible_distribution }}.yml"
+        - "setup/{{ ansible_os_family }}.yml"
+        - "setup/default.yml"
       paths:
         - "{{ role_path }}/tasks"
 ```
-Then you would provide `tasks/setup_default.yml` to do the generic setup, and e.g. `tasks/setup_Fedora.yml` to do the Fedora specific setup.  The "setup_default.yml" is required in order to use `with_first_found`, which will give an error if no file is found.
+Then you would provide `tasks/setup/default.yml` to do the generic setup, and
+e.g. `tasks/setup/Fedora.yml` to do the Fedora specific setup.  The
+"setup/default.yml" is required in order to use `with_first_found`, which will
+give an error if no file is found.
 
-If you want to have the "use first file found" semantics, but do not want to have to provide a default file, add `skip: true`:
+If you want to have the "use first file found" semantics, but do not want to
+have to provide a default file, add `skip: true`:
 ```yaml
 - name: Perform platform/version specific tasks
   include_tasks: "{{ item }}"
   with_first_found:
     - files:
-        - "setup_{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
-        - "setup_{{ ansible_distribution }}.yml"
-        - "setup_{{ ansible_os_family }}.yml"
+        - "setup/{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
+        - "setup/{{ ansible_distribution }}.yml"
+        - "setup/{{ ansible_os_family }}.yml"
       paths:
         - "{{ role_path }}/tasks"
       skip: true
 ```
 The advantage of this is that you do not have to provide a
-`setup-default.yml`.  The disadvantage is that if you misspell a filename e.g.
-`setup-Feodra.yml` you will not get an error.  **NOTE**: Always specify the
+`setup/default.yml`.  The disadvantage is that if you misspell a filename e.g.
+`setup/Feodra.yml` you will not get an error.  **NOTE**: Always specify the
 explicit path to the files to be included when using these idioms.  Otherwise,
 you rely on the default behavior which uses `ansible_search_path` and can lead
-to [unexpected results](https://github.com/richm/richm.github.io/blob/master/how-to-include-vars-and-tasks-in-ansible.md).
+to
+[unexpected results](https://github.com/richm/richm.github.io/blob/master/how-to-include-vars-and-tasks-in-ansible.md).
 
 ## Supporting multiple providers
 
