@@ -262,10 +262,9 @@ have to provide a default file, add `skip: true`:
 The advantage of this is that you do not have to provide a
 `setup/default.yml`.  The disadvantage is that if you misspell a filename e.g.
 `setup/Feodra.yml` you will not get an error.  **NOTE**: Always specify the
-explicit path to the files to be included when using these idioms.  Otherwise,
-you rely on the default behavior which uses `ansible_search_path` and can lead
-to
-[unexpected results](https://github.com/richm/richm.github.io/blob/master/how-to-include-vars-and-tasks-in-ansible.md).
+explicit path to the files to be included, using `{{ role_path }}/vars` or
+`{{ role_path }}/tasks`, when using these idioms.  See below "Ansible Best
+Practices" for more information.
 
 ## Supporting multiple providers
 
@@ -413,6 +412,18 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   Avoid duplicating the remote full path in the role directory, however, as that creates unnecessary depth in
   the file tree for the role. Grouping sets of similar files into a subdirectory of `templates` is allowable,
   but avoid unnecessary depth to the hierarchy.
+* Use `{{ role_path }}/subdir/` as the filename prefix when including files if
+  the name has a variable in it.  The problem is that your role may be
+  included by another role, and if you specify a relative path, the file could
+  be found in the including role.  For example, if you have something like
+  `include_vars: "{{ ansible_facts.os_family }}.yml"` and you do not provide
+  every possible `vars/{{ ansible_facts.os_family }}.yml` in your role,
+  Ansible will look in the including role for this file.  Instead, to ensure
+  that only your role will be referenced, use `include_vars: "{{
+  role_path}}/vars/{{ ansible_facts.os_family }}.yml"`. Same with other file
+  based includes such as `include_tasks`.
+  See [Ansible Search Path](https://docs.ansible.com/ansible/latest/dev_guide/overview_architecture.html#the-ansible-search-path)
+  for more information.
 
 ### Vars vs Defaults
 
