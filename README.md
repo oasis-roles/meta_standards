@@ -24,14 +24,14 @@ without the administrator (the user of the role) being forced to change anything
 (the roles should serve as abstractions to shield the administrator from differences). Of course,
 this means that the interface of the roles should be itself stable (i.e. changing only in a backward
 compatible way). This implies a great responsibility in the design of the interface, because the
-interface, unlike the underlying implementation, can not be easily changed. 
+interface, unlike the underlying implementation, can not be easily changed.
 
 The differences in the underlying operating systems that the roles need to compensate for are
 basically of two types:
 * Trivial differences like changed names of packages, services, changed location of configuration
   files. Roles must deals with those by using internal variables based on the OS defaults. This is
   fairly simple, but still it brings value to the user, because they then do not have to worry about
-  keeping up with such trivial changes. 
+  keeping up with such trivial changes.
 * Change of the underlying implementation of a given functionality. Quite often, there are multiple
   packages/components implementing the same functionality. Classic examples are the various MTAs
   (sendmail, postfix, qmail, exim), FTP daemons, etc. In the context of Linux System Roles, we call
@@ -113,7 +113,7 @@ user to focus on the functionality, not on technical details.
   [geerlingguy.ansible-role-apache](https://github.com/geerlingguy/ansible-role-apache/blob/f2b91ac84001db3fd4b43306a8f73f1a54f96f7d/vars/Debian.yml#L8)). This
   includes variables set by set_fact and register, because they persist in the namespace after the
   role has finished!
-  
+
 ## Providers
 
 When there are multiple implementations of the same functionality, we call them “providers”. A role
@@ -200,21 +200,23 @@ need different templates for different distributions.
 If some tasks need to be parameterized according to distribution and version (name of packages,
 configuration file paths, names of services), use this in the beginning of your `tasks/main.yml`:
 ```yaml
-- name: Set version specific variables
-  include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
-    - "{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
-    - "{{ ansible_distribution }}.yml"
-    - "{{ ansible_os_family }}.yml"
+- name: Set distribution specific variables
+  include_vars: "{{ lookup('first_found', files) }}"
+  vars:
+    files:
+      - "{{ ansible_facts.distribution }}_{{ ansible_facts.distribution_version }}.yml"
+      - "{{ ansible_facts.distribution }}_{{ ansible_facts.distribution_major_version }}.yml"
+      - "{{ ansible_facts.os_family }}_{{ ansible_facts.distribution_major_version }}.yml"
+      - "{{ ansible_facts.distribution }}.yml"
+      - "{{ ansible_facts.os_family }}.yml"
 ```
+
+This list is organized from most specific to least specific. This allows variables common to an entire OS family or distribution to be specified in a single file, but also allows overriding a specific version that needs an exception. For example, variables common to most Fedora distributions could be placed in `Fedora.yml`. If a particular version needs different variables, create a file named `Fedora-32.yml`. This file would be found first and the more generic `Fedora.yml` settings would be ignored.
 
 You can add `- default.yml` at the end to set the variables for unrecognized distributions from a common
 `default.yml` file (not to be confused with defaults for user-settable parameters, which go into
-`defaults/main.yml`). If this is not done, the role will fail for unrecognized distribution (this may or may
-not be intended). Put the distribution-specific variables into appropriate files under "vars/". Unfortunately,
-this would lead to duplicate vars files for similiar distibutions (e.g. CentOS 7 and RHEL 7). In cases such as
-these, use symlinks to avoid the duplication.
+`defaults/main.yml`). If this is not done, the role will fail for unrecognized distributions (this may or may
+not be intended). Put the distribution-specific variables into appropriate files under ``vars/``.
 
 
 ## Supporting multiple providers
@@ -381,7 +383,7 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   additional packages, then the required packages should be placed in `vars/main.yml` with a name such as
   `foo_packages`, and the extra packages should be passed in a variable named `foo_extra_packages`,
   which should default to an empty array in `defaults/main.yml` and be documented as such.
-  
+
 ## Documentation conventions
 
 * Use fully qualified role names in examples, like: `linux-system-roles.$ROLENAME` (with
@@ -390,7 +392,7 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   [7042](https://tools.ietf.org/html/rfc7042#section-2.1.1) and
   [3849](https://tools.ietf.org/html/rfc3849) addresses in examples.
 * Modules should have complete metadata, documentation, example and return blocks as
-  described in the 
+  described in the
   [Ansible docs](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html).
 
 References
@@ -402,5 +404,5 @@ inspiration or contrast to the standards described above.
 * https://github.com/debops/debops/blob/v0.7.2/docs/debops-policy/code-standards-policy.rst). For
   inspiration, as the DebOps project has some specific guidance that we do not necessarily
   want to follow.
-* https://docs.adfinis-sygroup.ch/public/ansible-guide/overview.html 
-* https://docs.openstack.org/openstack-ansible/latest/contributor/code-rules.html 
+* https://docs.adfinis-sygroup.ch/public/ansible-guide/overview.html
+* https://docs.openstack.org/openstack-ansible/latest/contributor/code-rules.html
