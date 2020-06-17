@@ -205,10 +205,10 @@ services), use this in the beginning of your `tasks/main.yml`:
 - name: Set platform/version specific variables
   include_vars: "{{ item }}"
   loop:
-    - "{{ role_path }}/vars/{{ ansible['os_family'] }}.yml"
-    - "{{ role_path }}/vars/{{ ansible['distribution'] }}.yml"
-    - "{{ role_path }}/vars/{{ ansible['distribution'] }}_{{ ansible['distribution_major_version'] }}.yml"
-    - "{{ role_path }}/vars/{{ ansible['distribution'] }}_{{ ansible['distribution_version'] }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_facts['os_family'] }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
   when: item is file
 ```
 The files in the `loop` are in order from least specific to most specific:
@@ -245,10 +245,10 @@ specific, including a "default":
   vars:
     ffparams:
       files:
-        - "{{ ansible['distribution'] }}_{{ ansible['distribution_version'] }}.yml"
-        - "{{ ansible['distribution'] }}_{{ ansible['distribution_major_version'] }}.yml"
-        - "{{ ansible['distribution'] }}.yml"
-        - "{{ ansible['os_family'] }}.yml"
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+        - "{{ ansible_facts['distribution'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
         - "default.yml"
       paths:
         - "{{ role_path }}/tasks/setup"
@@ -267,8 +267,8 @@ have to provide a default file, add `skip: true`:
   vars:
     ffparams:
       files:
-        - "{{ ansible['distribution'] }}_{{ ansible['distribution_version'] }}.yml"
-        - "{{ ansible['os_family'] }}.yml"
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
       paths:
         - "{{ role_path }}/tasks/setup"
       skip: true
@@ -283,7 +283,7 @@ have to provide a default file, add `skip: true`:
   idioms. See below "Ansible Best Practices" for more information.
 * Use the `ansible_facts['name']` bracket notation rather than the
   `ansible_facts.name` or `ansible_name` form.  For example, use
-  `ansible['distribution']` instead of `ansible_distribution` or
+  `ansible_facts['distribution']` instead of `ansible_distribution` or
   `ansible.distribution`.  The `ansible_name` form relies on fact injection,
   which can break if there is already a fact of that name. Also, the bracket
   notation is what is used in Ansible documentation such as [Commonly Used
