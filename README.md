@@ -211,7 +211,7 @@ configuration file paths, names of services), use this in the beginning of your 
       - "{{ ansible_facts.os_family }}.yml"
 ```
 
-This list is organized from most specific to least specific. This allows variables common to an entire OS family or distribution to be specified in a single file, but also allows overriding a specific version that needs an exception. For example, variables common to most Fedora distributions could be placed in `Fedora.yml`. If a particular version needs different variables, create a file named `Fedora-32.yml`. This file would be found first and the more generic `Fedora.yml` settings would be ignored.
+This list is organized from most specific to least specific. This allows variables common to an entire OS family or distribution to be specified in a single file, but also allows overriding a specific version that needs an exception.
 
 You can add `- default.yml` at the end to set the variables for unrecognized distributions from a common
 `default.yml` file (not to be confused with defaults for user-settable parameters, which go into
