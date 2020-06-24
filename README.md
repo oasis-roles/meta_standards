@@ -197,25 +197,99 @@ need different templates for different distributions.
 
 ## Supporting multiple distributions and versions
 
-If some tasks need to be parameterized according to distribution and version (name of packages,
-configuration file paths, names of services), use this in the beginning of your `tasks/main.yml`:
+You normally use `vars/main.yml` (automatically included) to set variables
+used by your role.  If some variables need to be parameterized according to
+distribution and version (name of packages, configuration file paths, names of
+services), use this in the beginning of your `tasks/main.yml`:
 ```yaml
-- name: Set version specific variables
+- name: Set platform/version specific variables
   include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
-    - "{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
-    - "{{ ansible_distribution }}.yml"
-    - "{{ ansible_os_family }}.yml"
+  loop:
+    - "{{ role_path }}/vars/{{ ansible_facts['os_family'] }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+  when: item is file
+```
+The files in the `loop` are in order from least specific to most specific:
+* `os_family` covers a group of closely related platforms (e.g. `RedHat`
+  covers RHEL, CentOS, Fedora)
+* `distribution` (e.g. `Fedora`) is more specific than `os_family`
+* `distribution`_`distribution_major_version` (e.g. `RedHat_8`) is more
+  specific than `distribution`
+* `distribution`_`distribution_version` (e.g. `RedHat_8.3`) is the most
+  specific
+
+See [Commonly Used
+Facts](https://docs.ansible.com/ansible/latest/user_guide/playbooks_conditionals.html#ansible-facts-distribution)
+for an explanation of the facts and their common values.
+
+Each file in the `loop` list will allow you to add or override variables to
+specialize the values for platform and/or version.  Using the `when: item is
+file` test means that you do not have to provide all of the `vars/` files,
+only the ones you need.  For example, if every platform except Fedora uses
+`srv_name` for the service name, you can define `myrole_service: srv_name` in
+`vars/main.yml` then define `myrole_service: srv2_name` in `vars/Fedora.yml`.
+In cases where this would lead to duplicate vars files for similiar
+distibutions (e.g. CentOS 7 and RHEL 7), use symlinks to avoid the
+duplication.
+
+Platform specific tasks, however, are different.  You probably want to perform
+platform specific tasks once, for the most specific match.  In that case, use
+`lookup('first_found')` with the file list in order of most specific to least
+specific, including a "default":
+```yaml
+- name: Perform platform/version specific tasks
+  include_tasks: "{{ item }}"
+  loop: "{{ lookup('first_found', ffparams) }}"
+  vars:
+    ffparams:
+      files:
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+        - "{{ ansible_facts['distribution'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
+        - "default.yml"
+      paths:
+        - "{{ role_path }}/tasks/setup"
+```
+Then you would provide `tasks/setup/default.yml` to do the generic setup, and
+e.g. `tasks/setup/Fedora.yml` to do the Fedora specific setup.  The
+`tasks/setup/default.yml` is required in order to use `lookup('first_found')`,
+which will give an error if no file is found.
+
+If you want to have the "use first file found" semantics, but do not want to
+have to provide a default file, add `skip: true`:
+```yaml
+- name: Perform platform/version specific tasks
+  include_tasks: "{{ item }}"
+  loop: "{{ lookup('first_found', ffparams) }}"
+  vars:
+    ffparams:
+      files:
+        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
+      paths:
+        - "{{ role_path }}/tasks/setup"
+      skip: true
 ```
 
-You can add `- default.yml` at the end to set the variables for unrecognized distributions from a common
-`default.yml` file (not to be confused with defaults for user-settable parameters, which go into
-`defaults/main.yml`). If this is not done, the role will fail for unrecognized distribution (this may or may
-not be intended). Put the distribution-specific variables into appropriate files under "vars/". Unfortunately,
-this would lead to duplicate vars files for similiar distibutions (e.g. CentOS 7 and RHEL 7). In cases such as
-these, use symlinks to avoid the duplication.
-
+**NOTE**:
+* Use `loop` with `lookup('first_found')` instead of `with_first_found`. The
+  guidance from Ansible is that `loop` is preferred to `with_<lookup>` even
+  though the latter is still supported for now.
+* Always specify the explicit, absolute path to the files to be included,
+  using `{{ role_path }}/vars` or `{{ role_path }}/tasks`, when using these
+  idioms. See below "Ansible Best Practices" for more information.
+* Use the `ansible_facts['name']` bracket notation rather than the
+  `ansible_facts.name` or `ansible_name` form.  For example, use
+  `ansible_facts['distribution']` instead of `ansible_distribution` or
+  `ansible.distribution`.  The `ansible_name` form relies on fact injection,
+  which can break if there is already a fact of that name. Also, the bracket
+  notation is what is used in Ansible documentation such as [Commonly Used
+  Facts](https://docs.ansible.com/ansible/latest/user_guide/playbooks_conditionals.html#ansible-facts-distribution)
+  and [Operating System and Distribution
+  Variance](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html#operating-system-and-distribution-variance)
 
 ## Supporting multiple providers
 
@@ -224,9 +298,10 @@ Use a task file per provider and include it from the main task file, like this e
 - name: include the appropriate provider tasks
   include_tasks: "main_{{ storage_provider }}.yml"
 ```
-The same process should be used for variables (not defaults, as defaults can not be loaded
-according to a variable).
-
+The same process should be used for variables (not defaults, as defaults can
+not be loaded according to a variable).  You should guarantee that a file
+exists for each provider supported, or use an explicit, absolute path using
+`role_path`.  See below "Ansible Best Practices" for more information.
 
 ## Generating files from templates
 * Comment with `{{ ansible_managed }}`at the top of the file.
@@ -363,6 +438,18 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   Avoid duplicating the remote full path in the role directory, however, as that creates unnecessary depth in
   the file tree for the role. Grouping sets of similar files into a subdirectory of `templates` is allowable,
   but avoid unnecessary depth to the hierarchy.
+* Use `{{ role_path }}/subdir/` as the filename prefix when including files if
+  the name has a variable in it.  The problem is that your role may be
+  included by another role, and if you specify a relative path, the file could
+  be found in the including role.  For example, if you have something like
+  `include_vars: "{{ ansible_facts['distribution'] }}.yml"` and you do not provide
+  every possible `vars/{{ ansible_facts['distribution'] }}.yml` in your role,
+  Ansible will look in the including role for this file.  Instead, to ensure
+  that only your role will be referenced, use `include_vars: "{{
+  role_path}}/vars/{{ ansible_facts['distribution'] }}.yml"`. Same with other file
+  based includes such as `include_tasks`.
+  See [Ansible Search Path](https://docs.ansible.com/ansible/latest/dev_guide/overview_architecture.html#the-ansible-search-path)
+  for more information.
 
 ### Vars vs Defaults
 
