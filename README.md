@@ -240,8 +240,7 @@ platform specific tasks once, for the most specific match.  In that case, use
 specific, including a "default":
 ```yaml
 - name: Perform platform/version specific tasks
-  include_tasks: "{{ item }}"
-  loop: "{{ lookup('first_found', ffparams) }}"
+  include_tasks: "{{ lookup('first_found', ffparams) }}"
   vars:
     ffparams:
       files:
@@ -262,8 +261,7 @@ If you want to have the "use first file found" semantics, but do not want to
 have to provide a default file, add `skip: true`:
 ```yaml
 - name: Perform platform/version specific tasks
-  include_tasks: "{{ item }}"
-  loop: "{{ lookup('first_found', ffparams) }}"
+  include_tasks: "{{ lookup('first_found', ffparams) }}"
   vars:
     ffparams:
       files:
@@ -275,9 +273,9 @@ have to provide a default file, add `skip: true`:
 ```
 
 **NOTE**:
-* Use `loop` with `lookup('first_found')` instead of `with_first_found`. The
-  guidance from Ansible is that `loop` is preferred to `with_<lookup>` even
-  though the latter is still supported for now.
+* Use `include_tasks` or `include_vars` with `lookup('first_found')` instead
+  of `with_first_found`.  `loop` is not needed - the include forms take a
+  string or a list directly.
 * Always specify the explicit, absolute path to the files to be included,
   using `{{ role_path }}/vars` or `{{ role_path }}/tasks`, when using these
   idioms. See below "Ansible Best Practices" for more information.
