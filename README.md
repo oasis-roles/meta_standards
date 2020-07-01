@@ -197,19 +197,23 @@ need different templates for different distributions.
 
 ## Supporting multiple distributions and versions
 
+### Platform specific variables
+
 You normally use `vars/main.yml` (automatically included) to set variables
 used by your role.  If some variables need to be parameterized according to
 distribution and version (name of packages, configuration file paths, names of
 services), use this in the beginning of your `tasks/main.yml`:
 ```yaml
 - name: Set platform/version specific variables
-  include_vars: "{{ item }}"
+  include_vars: "{{ __rolename_vars_file }}"
   loop:
-    - "{{ role_path }}/vars/{{ ansible_facts['os_family'] }}.yml"
-    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}.yml"
-    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
-    - "{{ role_path }}/vars/{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
-  when: item is file
+    - "{{ ansible_facts['os_family'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+  vars:
+    __rolename_vars_file: "{{ role_path }}/vars/{{ item }}"
+  when: __rolename_vars_file is file
 ```
 The files in the `loop` are in order from least specific to most specific:
 * `os_family` covers a group of closely related platforms (e.g. `RedHat`
@@ -234,15 +238,44 @@ In cases where this would lead to duplicate vars files for similiar
 distibutions (e.g. CentOS 7 and RHEL 7), use symlinks to avoid the
 duplication.
 
+**NOTE**: With this setup, files can be loaded twice.  For example, on Fedora,
+the `distribution_major_version` is the same as `distribution_version` so the
+file `vars/Fedora_31.yml` will be loaded twice if you are managing a Fedora 31
+host.  If `distribution` is `RedHat` then `os_family` will also be `RedHat`,
+and `vars/RedHat.yml` will be loaded twice. This is usually not a problem -
+you will be replacing the variable with the same value, and the performance
+hit is negligible.  If this is a problem, construct the file list as a list
+variable, and filter the variable passed to `loop` using the `unique` filter
+(which preserves the order):
+```yaml
+- name: Set vars file list
+  set_fact:
+    __rolename_vars_file_list:
+      - "{{ ansible_facts['os_family'] }}.yml"
+      - "{{ ansible_facts['distribution'] }}.yml"
+      - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+      - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+
+- name: Set platform/version specific variables
+  include_vars: "{{ __rolename_vars_file }}"
+  loop: "{{ __rolename_vars_file_list | unique | list }}"
+  vars:
+    __rolename_vars_file: "{{ role_path }}/vars/{{ item }}"
+  when: __rolename_vars_file is file
+```
+Or define your `__rolename_vars_file_list` in your `vars/main.yml`.
+
+### Platform specific tasks
+
 Platform specific tasks, however, are different.  You probably want to perform
 platform specific tasks once, for the most specific match.  In that case, use
 `lookup('first_found')` with the file list in order of most specific to least
 specific, including a "default":
 ```yaml
 - name: Perform platform/version specific tasks
-  include_tasks: "{{ lookup('first_found', ffparams) }}"
+  include_tasks: "{{ lookup('first_found', __rolename_ff_params) }}"
   vars:
-    ffparams:
+    __rolename_ff_params:
       files:
         - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
         - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
@@ -261,9 +294,9 @@ If you want to have the "use first file found" semantics, but do not want to
 have to provide a default file, add `skip: true`:
 ```yaml
 - name: Perform platform/version specific tasks
-  include_tasks: "{{ lookup('first_found', ffparams) }}"
+  include_tasks: "{{ lookup('first_found', __rolename_ff_params) }}"
   vars:
-    ffparams:
+    __rolename_ff_params:
       files:
         - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
         - "{{ ansible_facts['os_family'] }}.yml"
