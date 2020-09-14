@@ -359,8 +359,10 @@ exists for each provider supported, or use an explicit, absolute path using
   specified as a list, but beware of bare variables in `when:`.
 * All roles need to, minimally, pass a basic ansible-playbook syntax check run
 * All task arguments should be spelled out in YAML style and not use `key=value` type of arguments
-* All YAML files need to pass standard yamllint syntax with the modifications listed in tests/yamllint.yml
-  in the meta\_skeleton role. These modifications are minimal: document starter characters (the initial
+* All YAML files need to pass standard yamllint syntax with the modifications listed in
+  [yamllint.yml](https://github.com/oasis-roles/meta_test/blob/master/yamllint.yml) in the
+  [meta\_test](https://github.com/oasis-roles/meta_test) role. These modifications are minimal:
+  document starter characters (the initial
   `---` string at the top of a file) should not be used, and it is not necessary to start every comment
   with a space. Most comments should start with a space, but no space is allowed when a comment is
   documenting an optional variable with its default value.
