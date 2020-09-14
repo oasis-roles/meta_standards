@@ -234,8 +234,8 @@ file` test means that you do not have to provide all of the `vars/` files,
 only the ones you need.  For example, if every platform except Fedora uses
 `srv_name` for the service name, you can define `myrole_service: srv_name` in
 `vars/main.yml` then define `myrole_service: srv2_name` in `vars/Fedora.yml`.
-In cases where this would lead to duplicate vars files for similiar
-distibutions (e.g. CentOS 7 and RHEL 7), use symlinks to avoid the
+In cases where this would lead to duplicate vars files for similar
+distributions (e.g. CentOS 7 and RHEL 7), use symlinks to avoid the
 duplication.
 
 **NOTE**: With this setup, files can be loaded twice.  For example, on Fedora,
@@ -366,7 +366,7 @@ exists for each provider supported, or use an explicit, absolute path using
   documenting an optional variable with its default value.
   * As a result of being able to pass basic YAML lint, avoid the use of `True` and `False` for boolean values
    in playbooks. These values are sometimes used because they are the words Python uses. However, they are
-   improper YAML and will be treated as either strigns or as booleans but generating a warning depending on
+   improper YAML and will be treated as either strings or as booleans but generating a warning depending on
    the particular YAML implementation.
    * Do not use the Ansible-specific `yes` and `no` as boolean values in YAML as these are completely
    custom extensions used by Ansible and are not part of the YAML spec.
@@ -400,7 +400,7 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   exists. If not, see the [section](#check-mode-and-idempotency-issues) about idempotency and check mode and
   make sure that you support them properly (your task will likely need options such as `changed_when:`
   and maybe `check_mode:` ). Anytime `command` or `shell` modules are used, a comment in the code with
-  justificiation would help with future maintenance.
+  justification would help with future maintenance.
 * Beware of bare variables (expressions consisting of just one variable reference without any
   operator) in `when`, their behavior is unexpected
   [more_info](https://github.com/ansible/ansible/issues/39414).
