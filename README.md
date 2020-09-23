@@ -513,6 +513,32 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   described in the 
   [Ansible docs](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html).
 
+## Collections
+
+### Modules and module_utils
+In a collection, the names of the module and module_utils files must be unique
+since all of them are located in
+`COLLECTION_NAMESPACE/COLLECTION_NAME/plugins/modules` (modules) and
+`COLLECTION_NAMESPACE/COLLECTION_NAME/plugins/module_utils` (module supporting
+files).  It is recommended to:
+* start module filenames with `ROLENAME_`
+* use a sub-directory `module_utils/ROLENAME/` for the role-specific
+  module_utils files
+* avoid generic names such as `size.py`
+
+If you are converting several roles into collection format and bundling them in
+a collection, you may need to rename files so that they are unique.  You may
+have to edit your module files to adjust the python imports.
+
+### Private Roles
+If your collection uses "private" roles - roles used to implement features in
+the public roles, but not meant to be used outside of the role - these roles are
+"top level" roles in the collection, meaning they can be used directly by users - there is no mechanism in Ansible to restrict role usage.  If you want to denote
+these roles as being "private" to the collection, and not supported for use
+directly, begin the name of the role with an underscore `_`.  This doesn't make
+the role "private" but it lets the user know that this role isn't for general
+use.
+
 References
 ==========
 
