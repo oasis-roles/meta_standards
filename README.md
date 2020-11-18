@@ -431,7 +431,7 @@ and [development](https://docs.ansible.com/ansible/latest/dev_guide/index.html).
   * https://github.com/linux-system-roles/storage/pull/26
   * https://github.com/linux-system-roles/storage/issues/49
 * All tasks should be idempotent, with notable and rare exceptions such as the
-  [OASIS reboot role](https://github.com/oasis-roles/reboot).
+  [OASIS reboot role](https://github.com/oasis-roles/ansible_collection_system/tree/master/roles/reboot).
 * Avoid the use of `when: foo_result is changed` whenever possible. Use
   handlers, and, if necessary, handler
   chains to achieve this same result. Exceptions are permitted but they should be avoided when possible
