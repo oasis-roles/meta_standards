@@ -1,3 +1,8 @@
+**This repository has been archived.  The documentation here has been moved to
+the [Red Hat Community of Practice repository](https://github.com/redhat-cop/automation-good-practices).**
+===================
+
+
 This document is intended to be a standards document for the Ansible roles contained in the
 Oasis Roles repositories.
 
